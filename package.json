@@ -2,7 +2,8 @@
   "name": "authence",
   "version": "1.0.2",
   "description": "Authentication Service for users",
-  "main": "index.js",
+  "main": "index.jsx",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/Siser-Pratap/Authence/issues"
   },
-  "homepage": "https://github.com/Siser-Pratap/Authence#readme"
+  "homepage": "https://github.com/Siser-Pratap/Authence#readme",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-router-dom": "^6.26.2"
+  }
 }
