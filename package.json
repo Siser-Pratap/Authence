@@ -1,0 +1,19 @@
+{
+  "name": "authence",
+  "version": "1.0.2",
+  "description": "Authentication Service for users",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Siser-Pratap/Authence.git"
+  },
+  "author": "siser pratap",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Siser-Pratap/Authence/issues"
+  },
+  "homepage": "https://github.com/Siser-Pratap/Authence#readme"
+}
