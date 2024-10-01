@@ -1,15 +1,3 @@
-// function isWds(String){
-//     return String === 'WDS'
-// }
-
-// module.exports = isWds;
-
-// import signIn from "./index.d.mjs";
-
-
-
-
-// export default signIn;
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // If using react-router for navigation
