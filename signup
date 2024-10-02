@@ -1,0 +1,683 @@
+(1) Dark template codepen 
+    html
+         <form id="container">
+ 
+        <h3 id="Heading">Sign Up</h3>
+        
+        <label>Username:</label><div class="row">
+        <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="100%"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/></svg></div><input name="username" type="text" placeholder="Username" required></div>
+        <div class="row name"><input type="text" placeholder="First Name" name="FirstName"><input type="text" placeholder="Last Name" name="LastName"></div>
+        <label>Email:</label><div class="row">
+            <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%"><path d="M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0L492.8 150.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM0 176V384c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V176L294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176z"/></svg></div><input type="email" placeholder="Email"  name="Email" required></div>
+        <label>Password:</label>
+        <div class="row">
+        
+        <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30px"><path d="M336 352c97.2 0 176-78.8 176-176S433.2 0 336 0S160 78.8 160 176c0 18.7 2.9 36.8 8.3 53.7L7 391c-4.5 4.5-7 10.6-7 17v80c0 13.3 10.7 24 24 24h80c13.3 0 24-10.7 24-24V448h40c13.3 0 24-10.7 24-24V384h40c6.4 0 12.5-2.5 17-7l33.3-33.3c16.9 5.4 35 8.3 53.7 8.3zM376 96a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/></svg></div><input type="password" placeholder="Password"  name="Password" required></div>
+        <label>Confirm Password:</label>
+        <div class="row">
+        
+            <div class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="30px"><path d="M336 352c97.2 0 176-78.8 176-176S433.2 0 336 0S160 78.8 160 176c0 18.7 2.9 36.8 8.3 53.7L7 391c-4.5 4.5-7 10.6-7 17v80c0 13.3 10.7 24 24 24h80c13.3 0 24-10.7 24-24V448h40c13.3 0 24-10.7 24-24V384h40c6.4 0 12.5-2.5 17-7l33.3-33.3c16.9 5.4 35 8.3 53.7 8.3zM376 96a40 40 0 1 1 0 80 40 40 0 1 1 0-80z"/></svg></div><input type="password" placeholder="Confirm Password" name="ConfirmPassword" required></div>
+
+        
+        <button type="submit">Sign In</button>
+        <span>
+        <span>Already have Account <a href="/login/"> Log In</a></span></span>
+    </form>
+
+    css 
+    *{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+body{
+    display: flex;
+    height: 100vh;
+    background-color: #343a40;
+}
+#container{
+    margin:auto;
+    display: flex;
+    color:#f8f9fa;
+    flex-direction: column;
+    width:500px;
+    box-shadow: 1px 2px 71px -6px rgba(0,0,0,0.67);
+    height:fit-content;
+    font-family:sans-serif;
+    background-color: #212529;
+    padding:25px 20px;
+    border-radius: 10px;
+}
+#Heading{
+    padding:15px;
+    text-align: center;
+    font-size: 2.5em;
+    font-weight: 900;
+}
+label{
+    font-size: 1.1em;
+    font-weight: 500;
+    margin:10px 0px;
+}
+input{
+    padding:10px;
+    border-top-right-radius: 10px;
+    height: 50px;
+    background-color: #6c757d;
+    border-bottom-right-radius:10px;
+    outline: none;
+    border: none;
+    font-size:19px;
+    transition-duration: 0.15s;
+    
+    color:#f8f9fa;
+}
+input:focus{
+    outline: none;
+    background-color: none;
+}
+input::placeholder{
+    color:#f8f9fa;
+    font-size: 19.2px;
+}
+.row:not(.name){
+    width:100%;
+    height:fit-content;
+    display: grid;
+    grid-template-columns: 10% 90%;
+    grid-template-rows: 50px;
+}
+.name{
+    width:100%;
+    height: fit-content;
+    display: flex;
+    margin-top:20px;
+
+}
+.name>input{
+    width:calc(50% - 5px);
+    margin:5px;
+    border-radius: 10px;;
+}
+.icon{
+    height: 50px;
+    background-color: #6c757d;
+    border-top-left-radius: 10px;
+    padding:10px;
+    margin-right:1px;
+    border-bottom-left-radius: 10px;
+    fill:white;
+}
+button{
+    width:fit-content;
+    margin:20px auto;
+    padding:10px 20px;
+    outline: none;
+    border: none;
+    border-radius: 20px;
+    font-weight: 700;
+    color:white;
+    background-color: #248277;
+    font-family:sans-serif;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition-duration: 0.25s;
+}
+button:hover{
+    background-color: #036666;
+}
+span{
+    display: flex;
+    justify-content: flex-end;
+
+}
+a{
+    text-decoration: none;
+    color:#99e2b4;
+}
+span>span>a{
+    margin:0px 5px
+}
+a:hover{
+    color: #06d6a0;
+}
+#MsgBx{
+    width:100%;
+    position: absolute;
+    top:0px;
+    left:0px;
+    height:auto;
+    padding:20px;
+}
+#MsgBx>li{
+    list-style: none;
+    color: white;
+    border-radius: 5px;
+    padding:10px;
+    background-color: #036666;
+    width:fit-content;
+    font-family: 'Ubuntu', sans-serif;
+    position: relative;
+    animation: enteranceError 1s ease;
+    margin:5px;
+}
+input:focus{
+    border:5px solid #06d6a0;
+    height: 49px;
+    margin-top:2px;
+}
+
+
+
+
+(2) animated dark registration template 
+    html 
+    <head>
+    <title>Animated Registration Form</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <div class="container">
+        <div class="image">
+            <div class="form-box">
+                <div class="form">
+                    <h2>Register</h2>
+                    <div class="input-box">
+                        <input type="text" required/>
+                        <label for="">Username</label>
+                    </div>
+                    <div class="input-box">
+                        <input type="text" required/>
+                        <label for="">Email</label>
+                    </div>
+                    <div class="input-box">
+                        <input type="text" required/>
+                        <label for="">Password</label>
+                    </div>
+                    <div class="group">
+                        <a href="#">Forgot Password</a>
+                        <a href="#">Sign In</a>
+                    </div>
+                    <button>Sign up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+
+
+
+css 
+
+*{
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    box-sizing: border-box;
+}
+
+body{
+    display: flex;
+    background: #0c1022;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+.container{
+    position: relative;
+    width: 350px;
+    height: 500px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-inline: 32px;
+    overflow: hidden;
+}
+
+.container::before{
+    content: "";
+    position: absolute;
+    height: 650px;
+    width: 650px;
+    background: conic-gradient(transparent, transparent, transparent, #d400d4);
+    animation: animate 4s linear infinite;
+    animation-delay: -2s;
+}
+
+.container::after{
+    content: "";
+    position: absolute;
+    height: 650px;
+    width: 650px;
+    background: conic-gradient(transparent, transparent, transparent, #00cfff);
+    animation: animate 4s linear infinite;
+}
+
+@keyframes animate{
+    0%{
+        transform: rotate(0);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+}
+
+.image{
+    position: absolute;
+    inset: 5px;
+    background-color: #0c1022;
+    z-index: 1;
+    border-radius: 16px;
+}
+
+.form-box{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.form-box .form h2{
+    font-size: 32px;
+    color: #fff;
+    text-align: center;
+}
+
+.form .input-box{
+    position: relative;
+    margin: 30px 0;
+    width: 310px;
+    border-bottom: 2px solid #fff;
+}
+
+.input-box input{
+    width: 100%;
+    height: 50px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    padding: 0 35px 0 5px;
+    color: #fff;
+}
+
+input:focus ~ label,
+input:valid ~ label{
+    top: -5px;
+}
+
+.input-box label{
+    position: absolute;
+    color: #fff;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    font-size: 16px;
+    pointer-events: none;
+    transition: .3s;
+}
+
+.group{
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.group a{
+    position: relative;
+    top: -15px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+button{
+    height: 40px;
+    width: 100px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    border-radius: 5px;
+}
+
+button:focus{
+    color: #fff;
+    background-color: #0c1022;
+    border: 2px solid #fff;
+}
+
+
+(3) web page design light theme with both login and signup options 
+
+    html
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Signup Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="info-section">
+            <h1>Log in Sign up</h1>
+            <p>Use this Button in any of your projects for free.</p>
+            <div class="button-group">
+                <button class="login-btn">Log in</button>
+                <button class="signup-btn">Sign up</button>
+            </div>
+            <p class="copy-text">Copy the button and use it in your designs or you can copy the components from the assets page.</p>
+        </div>
+
+        <div class="form-section">
+            <div class="form-box">
+                <h2>Log In</h2>
+                <button class="google-btn">Continue with Google</button>
+                <p>or</p>
+                <form>
+                    <input type="email" placeholder="Email Address" required>
+                    <input type="password" placeholder="Password" required>
+                    <button type="submit" class="login-submit-btn">Log in</button>
+                    <p><a href="#">Forget Password?</a></p>
+                </form>
+                <p>Don’t Have an account? <a href="#">Signup Now.</a></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+
+css 
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f9f9f9;
+}
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    width: 80%;
+}
+
+.info-section {
+    flex: 1;
+    padding: 50px;
+}
+
+.info-section h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.info-section p {
+    margin-bottom: 30px;
+    color: #555;
+}
+
+.button-group {
+    margin-bottom: 30px;
+}
+
+.login-btn, .signup-btn {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: 1px solid #000;
+    background-color: transparent;
+    font-size: 16px;
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.signup-btn {
+    background-color: #1e90ff;
+    color: #fff;
+    border: none;
+}
+
+.copy-text {
+    color: #aaa;
+}
+
+.form-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 400px;
+}
+
+.form-box h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.google-btn {
+    background-color: #4285F4;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+form p {
+    margin-top: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.login-submit-btn {
+    background-color: #1e90ff;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    cursor: pointer;
+}
+
+a {
+    color: #1e90ff;
+    text-decoration: none;
+}
+
+(4) light theme normal signup template
+
+    html
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="signup.css">
+</head>
+<body>
+    <div class="signup-container">
+        <div class="form-box">
+            <h2>Create an account</h2>
+            <p>Connect with your friends today!</p>
+
+            <form>
+                <input type="text" placeholder="Enter Your Username" required>
+                <input type="email" placeholder="Enter Your Email" required>
+                <input type="tel" placeholder="Enter Your Phone Number" required>
+                <div class="password-wrapper">
+                    <input type="password" placeholder="Enter Your Password" required>
+                    <span class="password-toggle">&#128065;</span>
+                </div>
+                <button type="submit" class="signup-btn">Sign Up</button>
+            </form>
+
+            <div class="divider">
+                <hr> <span>Or With</span> <hr>
+            </div>
+
+            <button class="google-btn">Signup with Google</button>
+
+            <p class="login-link">Already have an account? <a href="#">Login</a></p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+css 
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #fce4ec;
+}
+
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.form-box {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    width: 350px;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #555;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.password-wrapper input {
+    padding-right: 40px;
+}
+
+.password-toggle {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+}
+
+.signup-btn {
+    background-color: #1e90ff;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    cursor: pointer;
+    margin-bottom: 20px;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.divider hr {
+    flex: 1;
+    border: none;
+    height: 1px;
+    background-color: #ddd;
+    margin: 0 10px;
+}
+
+.divider span {
+    font-size: 12px;
+    color: #888;
+}
+
+.google-btn {
+    background-color: #4285F4;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    margin-bottom: 15px;
+    cursor: pointer;
+}
+
+.login-link {
+    font-size: 14px;
+    color: #888;
+}
+
+.login-link a {
+    color: #1e90ff;
+    text-decoration: none;
+}
