@@ -1,8 +1,3 @@
-const signIn = (email, password) => {
-    
-     return {password ,email};
-}
+import SignUp from "./components/SignUp/SignUp";
 
-signIn.displayName = "signIn";
-
-export default signIn;
+export default SignUp;

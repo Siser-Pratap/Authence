@@ -10,6 +10,7 @@ const SignUp = ({backend}) => {
     const [formData, setformData] = useState({});
     const [error, seterror] = useState(false);
     const [loading, setloading] = useState(false);
+    const [password, setpassword] = useState("");
     const [errorText, seterrorText] = useState("");
 
     const navigate = useNavigate();
@@ -19,17 +20,18 @@ const SignUp = ({backend}) => {
     }
 
     const handleConfirm = (e) => {
-        seterrorText(e.target.value);
+        setpassword({...password, password: e.target.value});
     }
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if(formData.password !== confirm){
+        
+        if(formData.password !== password){
             seterror(true);
         }
         try {
             setloading(true);
-            const res = await axios.post(`${backend}`, formData);
+            const res = await axios.post(`http://localhost:3000/api/auth`, formData);
             const data = await res.json();
             console.log(data);
             setloading(false);

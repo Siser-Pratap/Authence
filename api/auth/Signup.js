@@ -1,12 +1,10 @@
-import user_black_one from "../../userSchema/userSchema";
 import bcryptjs from "bcryptjs";
-import jwt from jsonwebtoken;
-
-
 const signup = async(req, res)=>{
-
+    
     const {username, password, email} = req.body;
-    // const hashedPassword =bcryptjs.hashSync(password, 10);
+    // console.log(username, password, email);
+    const hashedPassword =bcryptjs.hashSync(password, 10);
+    console.log(hashedPassword);
 
     // const userName = await user_black_one.findOne({username: username});
     // const Email = await user_black_one.findOne({email: email});
