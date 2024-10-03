@@ -2,39 +2,42 @@ import React, {useEffect} from "react";
 import { useNavigate } from "react-router-dom";
 import {useState} from 'react';
 import "./SignUp.css";
+import axios from "axios";
+
 
 const SignUp = ({user}) => {
 
-    const [formData, setformData] = useState(null);
-    const [confirm, setconfirm] = useState("");
+    const [formData, setformData] = useState({});
     const [error, seterror] = useState(false);
     const [loading, setloading] = useState(false);
+    const [errorText, seterrorText] = useState("");
 
-
-
-
-
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
-        setformData({...formData}, [e.target.id]=e.target.value);
+        setformData({...formData, [e.target.id]:e.target.value});
     }
 
     const handleConfirm = (e) => {
-        setconfirm(e.target.value);
+        seterrorText(e.target.value);
     }
 
-
-
-
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async(e) => {
         e.preventDefault();
         if(formData.password !== confirm){
             seterror(true);
         }
-        
-
-        
+        try {
+            setloading(true);
+            const res = await axios.post(`${import.meta.env.BACKEND_URL}/api/signup`, formData);
+            const data = await res.json();
+            console.log(data);
+            setloading(false);
+            
+        }
+        catch (error) {
+            seterror(true);
+        }
     }
 
     
@@ -70,7 +73,7 @@ const SignUp = ({user}) => {
             </div>
             <input type="password" onChange={handleConfirm} placeholder="Confirm Password" name="ConfirmPassword" required />
         </div>
-        <button className="submit" type="submit" onClick={handleSubmit}>Sign In</button>
+        <button className="submit" type="submit" onClick={handleSubmit}>{loading?"loading":"Sign Up"}</button>
         <p className="error">{error && "Password does not matches"}</p>
         <span>
         <span>Already have Account <a href="/login/"> Log In</a></span></span>
