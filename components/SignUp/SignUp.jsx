@@ -5,7 +5,7 @@ import "./SignUp.css";
 import axios from "axios";
 
 
-const SignUp = ({user}) => {
+const SignUp = ({backend}) => {
 
     const [formData, setformData] = useState({});
     const [error, seterror] = useState(false);
@@ -29,7 +29,7 @@ const SignUp = ({user}) => {
         }
         try {
             setloading(true);
-            const res = await axios.post(`${import.meta.env.BACKEND_URL}/api/signup`, formData);
+            const res = await axios.post(`${backend}`, formData);
             const data = await res.json();
             console.log(data);
             setloading(false);
