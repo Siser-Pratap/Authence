@@ -1,4 +1,8 @@
 import SignIn from "./components/SignIn";
+import SignUp from "./components/SignUp/SignUp";
 
 
-export default SignIn;
+
+
+
+export {SignIn, SignUp};
