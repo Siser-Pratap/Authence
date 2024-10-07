@@ -5,13 +5,15 @@ import "./SignUp.css";
 import axios from "axios";
 
 
-const SignUp = ({backend}) => {
+const SignUp = ({backend, dbUrl} ) => {
 
     const [formData, setformData] = useState({});
     const [error, seterror] = useState(false);
     const [loading, setloading] = useState(false);
     const [password, setpassword] = useState("");
     const [errorText, seterrorText] = useState("");
+
+
 
     const navigate = useNavigate();
 
@@ -31,7 +33,10 @@ const SignUp = ({backend}) => {
         }
         try {
             setloading(true);
-            const res = await axios.post(`http://localhost:3000/api/auth`, formData);
+            
+            const res = await axios.post(`${backend}`, dbUrl ? { formData, dbUrl } : formData);
+
+           
             const data = await res.json();
             console.log(data);
             setloading(false);
