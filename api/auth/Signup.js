@@ -1,24 +1,43 @@
 import bcryptjs from "bcryptjs";
 import user_black_one from "../../userSchema/userSchema.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
 const signup = async(req, res)=>{
     
-    const {username, password, email} = req.body;
-    // console.log(username, password, email);
-    const hashedPassword =bcryptjs.hashSync(password, 10);
-    console.log(hashedPassword);
-
-    const userName = await user_black_one.findOne({username: username});
-    const Email = await user_black_one.findOne({email: email});
-
-    if(userName){
-        res.json({message:"Username already taken"});
+    console.log(req.body);
+    const dbUrl = req.body.dbUrl;
+    if(!dbUrl){
+        const {username, password, email} = req.body;
+        mongoose.connect(`${process.env.MONGODB_URL}`)
+        .then(()=>console.log("Connected to database"))
+        .catch((err)=>console.log(err));
+        const hashedPassword =bcryptjs.hashSync(password, 10);
+        console.log(hashedPassword);
+        const newUser = new user_black_one({username, password:hashedPassword, email});
     }
+    
+    // const dbUrl = req.body.dbUrl;
+    
+    // if(!dbUrl){
+        
+    // }
+    
+    
 
-    if(Email){
-        res.json({message:"User already registered"});
-    }
+    // const userName = await user_black_one.findOne({username: username});
+    // const Email = await user_black_one.findOne({email: email});
 
-    const newUser = new user_black_one({username, password:hashedPassword, email});
+    // if(userName){
+    //     res.json({message:"Username already taken"});
+    // }
+
+    // if(Email){
+    //     res.json({message:"User already registered"});
+    // }
+
+    
 
     try {
         await newUser.save();
