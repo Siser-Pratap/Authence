@@ -1,1 +1,10 @@
 test-project
+node_modules
+components
+api
+userSchema
+.env
+index.d.mjs
+index.js
+
+
