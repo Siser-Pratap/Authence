@@ -3,7 +3,7 @@ import user_black_one from "../../userSchema/userSchema.js";
 import * as dotenv from "dotenv";
 import mongoose from "mongoose";
 
-// dotenv.config({path:"./.env"});
+dotenv.config();
 
 const signup = async(req, res)=>{
 
@@ -19,8 +19,11 @@ const signup = async(req, res)=>{
             .then(()=>console.log("Connected to database"))
             .catch((err)=>console.log(err));
         const hashedPassword =bcryptjs.hashSync(password, 10);
+        const key = process.env.API_KEY;
         console.log(hashedPassword);
-        const newUser = new user_black_one({username, password:hashedPassword, email});
+        console.log(key);
+        
+        const newUser = new user_black_one({username, password:hashedPassword, email,key});
         try {
             await newUser.save();
             console.log("user Created");
