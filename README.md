@@ -1,136 +1,118 @@
 # Authence
 
-Authence is an early-stage JavaScript authentication package with React form components and a MongoDB signup handler. The root package declares version `1.0.4` and uses ES modules.
+Authence is a full-stack Next.js authentication application with custom React forms and self-hosted authentication backed by MongoDB.
 
-**Status: prototype.** Registration is partially implemented, sign-in is a UI placeholder, and the demo and package distribution need fixes before they can be used end to end.
+The migration lives on `docs/nextjs-migration-plan`. See [migration.md](./migration.md) for the plan, phase evidence, and remaining release work.
 
-## Current implementation
+## Implemented
 
-| Area | What exists today |
-| --- | --- |
-| Signup UI | Styled React form for username, email, password, and password confirmation; posts to a caller-provided backend URL using Axios. |
-| Signup handler | Async `signup(req, res)` function that attempts a MongoDB connection, hashes the password with bcryptjs, and saves a Mongoose user document. |
-| User model | Required `username`, `email`, `password`, and `key` fields; username and email have unique indexes declared. |
-| Sign-in UI | A button that navigates to `/dashboard` without checking credentials. |
-| Demo | React 18 / Vite 5 app in `test-project/` with `/`, `/sign-in`, and `/sign-up` routes; authentication component imports are unresolved. |
-| Tests | Root `npm test` is a placeholder that exits with an error. |
+- Registration with a normalized, unique username and email.
+- Email/password sign-in, a server-protected dashboard, and sign-out.
+- Seven-day database-backed sessions, expiry/revocation checks, and secure HttpOnly cookies in production.
+- Server-side validation, database-backed rate limits, trusted-origin checks, and private account responses.
+- Accessible forms with confirmation, pending/error feedback, keyboard submission, and responsive styles.
 
-Sign-out, authenticated sessions, protected routes, password reset, email verification, and token issuance/verification are not implemented. `jsonwebtoken` is a dependency but is unused by the current authentication code.
+Registration is followed by an explicit sign-in. To reduce email enumeration, registration can return the same success response for an existing email; it never changes that account's password.
 
-## Repository layout
+**This is the core migration milestone, not a public production release.** Email verification and password recovery are not implemented. OAuth, MFA, multi-tenancy, and a distributable SDK are also outside this milestone.
 
-```text
-Authence/
-├── api/auth/Signup.js          # Backend signup handler
-├── components/
-│   ├── SignIn.jsx             # Placeholder sign-in component
-│   └── SignUp/
-│       ├── SignUp.jsx         # Signup form
-│       └── SignUp.css         # Form styling
-├── userSchema/userSchema.js   # Mongoose User model
-├── index.js                   # Default export: backend signup handler
-├── index.d.mjs                # Alternate module entry: signup UI
-├── package.json               # Root metadata and dependencies
-├── test-project/              # React + Vite demo scaffold
-├── signup                     # HTML/CSS design references
-└── ideas                      # Future component variation notes
-```
+## Stack
 
-## Package entry points
+Next.js 16.4.2 (App Router), React 19.3.1, strict TypeScript, Better Auth 1.7.12, and the version-matched MongoDB adapter. MongoDB must run as a replica set or sharded cluster because authentication writes use transactions. The application uses the Node.js runtime.
 
-- `main` points to `index.js`, which default-exports the backend `signup` handler.
-- `module` points to `index.d.mjs`, which default-exports the React `SignUp` component using an extensionless import. Despite its filename, this is JavaScript, not a TypeScript declaration file.
-- There is no `exports` map or unified public API. Consumers may resolve different entry points depending on their tooling.
+## Run locally
 
-Distribution is incomplete: there is no `.npmignore` or `files` allowlist, so npm falls back to `.gitignore`. A local `npm pack --dry-run` includes `index.js` but excludes `api/`, `components/`, `userSchema/`, and `index.d.mjs`. The included backend entry therefore imports a file missing from that archive. This describes packing the current repository; it does not verify an existing npm registry release.
-
-## Local development
-
-Use Node.js and npm. The root package does not declare a supported Node.js version through an `engines` field.
+Use Node.js 24 LTS and npm. Select Node 24 with your version manager, then:
 
 ```bash
-git clone https://github.com/Siser-Pratap/Authence.git
+git clone --branch docs/nextjs-migration-plan https://github.com/Siser-Pratap/Authence.git
 cd Authence
 npm ci
+cp .env.example .env.local
 ```
 
-The root has no `start`, `dev`, or `build` script. Importing the backend handler does not start an HTTP server, register a route, or configure request-body parsing.
+Configure a new development database in `.env.local`. Generate a unique secret using `openssl rand -base64 48`, and place it in `BETTER_AUTH_SECRET`. Do not commit the resulting file.
 
-The demo has separate dependencies and scripts:
+| Variable | Purpose |
+| --- | --- |
+| `MONGODB_URI` | Server-only MongoDB replica-set connection string. |
+| `MONGODB_DB_NAME` | Explicit database name; use a new database such as `authence_development`. |
+| `BETTER_AUTH_SECRET` | Unique server-only secret, at least 32 characters. |
+| `BETTER_AUTH_URL` | Exact application origin: `http://localhost:3000` for development; HTTPS in production. |
+
+For a local replica set using Docker, create a dedicated container and volume:
 
 ```bash
-cd test-project
-npm ci
+docker run --detach --name authence-dev-mongo --publish 127.0.0.1:27017:27017 --mount source=authence-dev-data,target=/data/db mongo:8.0 --replSet rs0 --bind_ip_all
+```
+
+Once MongoDB is ready, initialize the replica set once:
+
+```bash
+docker exec authence-dev-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+```
+
+Use `mongodb://127.0.0.1:27017/?replicaSet=rs0` as the local URI. On later runs, start the existing container with `docker start authence-dev-mongo`; do not reinitialize it or delete the volume.
+
+```bash
 npm run dev
 ```
 
-**Known demo blocker:** `test-project/src/main.jsx` imports `./components/SignIn.jsx` and `./components/SignUp.jsx`, but those files are absent. The actual components live in the repository-level `components/` directory. Imports and backend wiring must be corrected before the demo can exercise registration. `/dashboard` is not registered as a route, even though the sign-in placeholder navigates there.
+Open `http://localhost:3000`. Database connections and indexes initialize lazily on the first authentication request. Missing configuration or an unavailable database produces safe failure feedback. Building the application does not require access to a live database.
 
-Other demo commands are `npm run build`, `npm run lint`, and `npm run preview`. Preview serves a previously generated build. These scripts are defined in `test-project/package.json`; their presence does not mean the current demo builds successfully.
+## Commands
 
-## Signup behavior
-
-### React component
-
-`components/SignUp/SignUp.jsx` currently accepts two props:
-
-| Prop | Current behavior |
+| Command | Purpose |
 | --- | --- |
-| `backend` | URL passed directly to `axios.post`; must point to a backend endpoint provided by the consuming application. |
-| `dbUrl` | If truthy, changes the request body to `{ formData, dbUrl }`. Custom database handling is unfinished in the backend. |
+| `npm run dev` | Start the development server. |
+| `npm run build` | Build for production. |
+| `npm start` | Serve the production build; requires runtime configuration. |
+| `npm run lint` | Run ESLint. |
+| `npm run typecheck` | Generate route types and check TypeScript. |
+| `npm test` | Run configuration and identifier-validation unit tests. |
+| `npm run test:integration` | Test the real API/database lifecycle against an already running isolated test server. |
+| `npm run test:bundle` | Scan a production build for server configuration in browser bundles. |
+| `npm run test:failure` | Verify safe API failures after the disposable test database is stopped. |
+| `npm run test:e2e` | Run Chromium browser tests against an already running isolated test server. |
 
-The form collects `username`, `email`, and `password`. Without `dbUrl`, it posts these fields directly in the JSON body. It calls `useNavigate`, so it requires React Router context, even though it does not currently redirect after signup. The login link is hardcoded to `/login/`.
+Integration/browser tests are restricted to loopback URLs and an `authence_test*` database. They create synthetic accounts, expire their sessions, and clear test rate-limit counters. They must never run against real accounts. Configure the server and test process to use the same isolated database and origin.
 
-Known form issues:
+CI uses `npm ci` and a production dependency audit. It creates a disposable MongoDB replica set, generates temporary test configuration and an HTTPS certificate, and runs the production Next.js server behind a test-only HTTPS proxy. Playwright's certificate exception applies to this test setup; application TLS verification is not disabled.
 
-- Confirmation is stored as an object and compared to the password string, so the mismatch check is incorrect. A mismatch also does not stop the request.
-- The submit handler calls `res.json()` on an Axios response instead of reading `res.data`.
-- Request failures share the password-mismatch message, and loading is not cleared in the error path.
-- Submission is attached to the button's `onClick` rather than the form's `onSubmit`.
+## Structure
 
-Configurable appearance, initial values, redirect URLs, and alternate layouts are not implemented props. Earlier design notes should not be treated as an available component API.
+```text
+src/app/                 # Pages, layouts, and auth/account route handlers
+src/components/auth/     # Client forms, sign-out control, scoped styles
+src/lib/auth.ts          # Lazy server-only Better Auth configuration
+src/lib/auth-client.ts   # Browser-safe auth client
+src/lib/db.ts            # Shared MongoDB connection and indexes
+src/lib/config.ts        # Pure server-configuration validation
+src/lib/env.ts           # Server-only environment reader
+src/lib/validation/      # Shared identifier/password rules
+tests/                   # Unit, integration, and browser checks
+scripts/test-proxy.mjs   # CI-only local HTTPS termination
+migration.md             # Migration plan, evidence, and remaining work
+```
 
-### Backend handler
+Public pages are `/`, `/sign-up`, and `/sign-in`. `/dashboard` validates its session on the server. `GET /api/me` returns only the authenticated user's ID, username, and email, or `401`. Authentication endpoints are managed by Better Auth under `/api/auth/*`. The old `/login` URL redirects to `/sign-in`.
 
-`api/auth/Signup.js` expects an Express-style request and response supplied by a host application. It has no built-in endpoint URL.
+Usernames are stored in Better Auth's `name` field and normalized to lowercase ASCII letters, numbers, and underscores (3–30 characters). Email is normalized to lowercase. Sign-in uses email, not username. Passwords use the authentication library's hashing; they are not stored on the user document or returned by application endpoints.
 
-For requests without a truthy `req.body.dbUrl`, the handler:
+## Compatibility and remaining work
 
-1. Reads `username`, `password`, and `email` from `req.body`.
-2. Attempts a Mongoose connection using a hardcoded MongoDB connection string.
-3. Hashes the password with bcryptjs using a cost factor of `10`.
-4. Reads `process.env.API_KEY` and stores it as the user's required `key` field.
-5. Attempts to save the user and returns HTTP `201` on success, or HTTP `401` when the save throws.
+The root is now a private application and does not preserve the old npm package entry points. The old Vite demo, Express-style handler, Mongoose schema, and conflicting frontend/backend exports have been retired. Supporting SDK consumers would require a separately designed package/workspace.
 
-`dotenv.config()` runs when the handler module loads. `API_KEY` is the only environment variable read by this handler; it is stored on the user document and does not authenticate incoming requests. There is no environment-based MongoDB URI configuration. A missing `API_KEY` prevents a valid user document from being saved because the schema requires `key`.
+No legacy users, bcrypt hashes, application keys, or production databases have been imported or modified. Keeping MongoDB does not make old documents compatible with the new auth schema. Any import requires an inventory, backup, identity mapping, duplicate checks, and a deliberate password-reset/import strategy.
 
-If `req.body.dbUrl` is truthy, the save branch is skipped and no response is sent. Database connection failures are logged without stopping execution, and connection/password-hashing errors do not have comprehensive response handling. The schema uses `timeStamps` instead of Mongoose's `timestamps` option, so automatic timestamps are not enabled as intended.
+The owner reported rotating/revoking the database credential exposed in the original repository. It must not be reused. Branch cleanup does not erase Git history.
 
-## Security limitations
-
-The current code is unsuitable for handling real user credentials:
-
-- The signup handler contains hardcoded database credentials. Treat them as exposed and rotate them before further use; move database configuration to server-side environment variables.
-- It logs the request body, password hash, and `API_KEY`.
-- Its successful response includes the submitted plaintext password.
-- Server-side input validation, authentication checks, and rate limiting are absent. Duplicate username/email errors have no dedicated handling.
-- The `dbUrl` prop would send database connection information from the browser; database credentials should remain on the server.
-
-The repository also tracks an `.env` file and `node_modules/`, despite ignore rules for them. Adding a path to `.gitignore` does not remove already tracked files or erase values from Git history.
-
-## Validation and next work
-
-Root `npm test` currently prints `Error: no test specified` and exits with status `1`. There is no automated authentication test suite.
-
-Before an end-to-end integration or usable package release:
-
-1. Remove exposed secrets and credential logging, and stop returning passwords.
-2. Configure the database on the server, validate requests, and handle errors consistently.
-3. Repair signup confirmation, response handling, loading/error feedback, and demo imports.
-4. Define consistent backend and frontend entry points and include their files in the npm archive.
-5. Implement real sign-in, session/token handling, sign-out, and protected routes.
-6. Add tests for registration, authentication, failure paths, and package consumption.
+Before public production use, implement email verification and recovery, configure a delivery provider, validate the real host's proxy/header and rate-limit behavior, configure HTTPS and trusted origins, and exercise deployment/rollback with isolated environments. No production deployment or merge to `main` is included in this migration work.
 
 ## License
 
-`package.json` declares ISC. A standalone license file is not currently included in the repository.
+The project declares ISC in `package.json`.
+
+The final [verification run](https://github.com/Siser-Pratap/Authence/actions/runs/39908134818) passed clean installation, lint/typecheck/build, unit/API/browser tests, concurrent registration, multi-instance rate limits, browser-bundle secret checks, and database-outage handling. The production dependency audit found zero vulnerabilities.
+
+The development dependency graph retains [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) in `braces` through the Next.js lint plugin (five affected package entries). npm reported `3.0.3` as the latest upstream version during verification; no published patch was available. Keep lint input limited to trusted project files and track the upstream fix. This development-only finding remains open.

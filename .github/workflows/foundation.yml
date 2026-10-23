@@ -1,0 +1,118 @@
+name: Next.js verification
+
+on:
+  push:
+    branches: [docs/nextjs-migration-plan]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGODB_DB_NAME: authence_test_ci
+      BETTER_AUTH_URL: https://localhost:3443
+      AUTHENCE_TEST_URL: https://localhost:3443
+      AUTHENCE_SECOND_TEST_URL: http://127.0.0.1:3001
+      AUTHENCE_TEST_TLS_KEY: /tmp/authence-test.key
+      AUTHENCE_TEST_TLS_CERT: /tmp/authence-test.crt
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate disposable test configuration
+        run: |
+          node -e "const s = require('node:crypto').randomBytes(48).toString('base64'); console.log('::add-mask::' + s); require('node:fs').appendFileSync(process.env.GITHUB_ENV, 'BETTER_AUTH_SECRET=' + s + '\n')"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout /tmp/authence-test.key -out /tmp/authence-test.crt -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Inspect dependency audit
+        run: |
+          npm audit --json > /tmp/authence-audit.json || true
+          node -e "const a = require('/tmp/authence-audit.json'); console.log(JSON.stringify({ metadata: a.metadata, vulnerabilities: a.vulnerabilities }, null, 2))"
+      - name: Check production dependency security
+        run: npm audit --omit=dev --audit-level=high
+      - name: Check latest upstream braces release
+        run: npm view braces version
+      - run: npm test
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run test:bundle
+      - name: Install browser for end-to-end verification
+        run: npm exec playwright install --with-deps chromium
+      - name: Start disposable MongoDB replica set
+        run: |
+          docker run --detach --name authence-test-mongo --publish 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
+          for attempt in $(seq 1 45); do
+            if docker exec authence-test-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec authence-test-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for attempt in $(seq 1 45); do
+            if docker exec authence-test-mongo mongosh --quiet --eval 'if (!db.hello().isWritablePrimary) quit(1)' >/dev/null 2>&1; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify production server and authentication lifecycle
+        env:
+          NODE_EXTRA_CA_CERTS: /tmp/authence-test.crt
+        run: |
+          npm start > /tmp/authence-server.log 2>&1 &
+          next_pid=$!
+          npm start -- --port 3001 > /tmp/authence-second-server.log 2>&1 &
+          second_pid=$!
+          node scripts/test-proxy.mjs > /tmp/authence-proxy.log 2>&1 &
+          proxy_pid=$!
+          trap 'kill "$next_pid" "$second_pid" "$proxy_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 45); do
+            if curl --fail --silent --cacert "$AUTHENCE_TEST_TLS_CERT" "$AUTHENCE_TEST_URL" >/dev/null && curl --fail --silent "$AUTHENCE_SECOND_TEST_URL" >/dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1
+          npm run test:integration
+          npm run test:e2e
+          docker stop authence-test-mongo >/dev/null
+          npm run test:failure
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-lockfile
+          path: package-lock.json
+          if-no-files-found: error
+
+  lockfile:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/docs/nextjs-migration-plan'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-lockfile
+      - name: Commit verified dependency lockfile
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "build: lock verified application dependencies"
+            git push origin "HEAD:$BRANCH_NAME"
+          fi
