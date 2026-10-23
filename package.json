@@ -15,7 +15,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/config/*.test.mjs tests/security/*.test.mjs tests/validation/*.test.mjs",
-    "test:integration": "node --test tests/integration/*.test.mjs"
+    "test:integration": "node --test tests/integration/*.test.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.4.2",
@@ -32,6 +33,7 @@
     "@types/react-dom": "19.2.4",
     "eslint": "9.37.0",
     "eslint-config-next": "16.4.2",
-    "typescript": "6.0.2"
+    "typescript": "6.0.2",
+    "@playwright/test": "1.61.0"
   }
 }

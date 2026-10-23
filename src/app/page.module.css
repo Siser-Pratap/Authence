@@ -1,5 +1,8 @@
 .page { min-height: 100svh; display: grid; place-items: center; padding: 1.5rem; }
-.card { width: min(100%, 38rem); padding: clamp(1.5rem, 5vw, 3rem); background: var(--surface); border: 1px solid #3d4b52; border-radius: 1.25rem; }
+.card { width: min(100%, 42rem); padding: clamp(1.5rem, 5vw, 3.5rem); background: var(--surface); border: 1px solid #3d4b52; border-radius: 1.25rem; }
 .brand { color: var(--accent); font-size: 1rem; font-weight: 700; letter-spacing: 0.04em; }
-.card h1 { font-size: clamp(2rem, 6vw, 3.5rem); line-height: 1.1; letter-spacing: -0.04em; }
-.card p:last-child { color: var(--muted); line-height: 1.7; }
+.card h1 { font-size: clamp(2.5rem, 8vw, 4.75rem); line-height: 1.08; letter-spacing: -0.05em; }
+.card p { color: var(--muted); line-height: 1.7; }
+.actions { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; margin-top: 2rem; }
+.actions a { font-weight: 700; }
+.primary { min-height: 2.75rem; display: inline-flex; align-items: center; border-radius: 0.6rem; padding: 0.85rem 1.2rem; background: var(--accent); color: #123127; text-decoration: none; }

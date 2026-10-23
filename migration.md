@@ -27,7 +27,7 @@
 - `npm install` failed with `EPERM` connecting to the workspace proxy. The subsequent network-permission attempt did not complete; no dependency installation succeeded. Lint, Next.js type generation, typecheck, build, dev server, browser checks, and clean-install verification have NOT run. The initial local blocker was resolved for verification by using GitHub Actions. Run 39905715269 passed install, unit tests, lint, typecheck, and production build; the verified root lockfile was committed as 7e77ee9. A production-server smoke test is included in the Phase 2 CI run.
 - Next step once npm access is restored: install dependencies, inspect version-matched bundled docs, generate/review the lockfile, run lint/typecheck/build and a server smoke test, then begin the MongoDB/authentication phase against an isolated database.
 
-### Phase 2 — backend implemented; integration verification pending
+### Phase 2 — backend integration checks passed
 
 - Selected Better Auth 1.7.12 and its version-matched MongoDB adapter; MongoDB driver 7.7.0. The adapter supports transactions on replica sets, which are required for this application.
 - Added server-only lazy auth/database initialization, explicit indexes, normalized email and unique username/profile-name policy, 12–128 character passwords, seven-day database sessions, and database-backed rate limiting.
@@ -36,7 +36,16 @@
 - No legacy user import is performed. Existing databases and bcrypt hashes are untouched; any import/reset remains a separate operation after inventory.
 - Added a minimal protected `/api/me` and private/no-store responses; errors omit credentials and driver messages.
 - Added isolated replica-set integration tests against a production Next.js server behind test-only HTTPS termination. CI generates its own short-lived secret/certificate and uses no repository/production secrets.
-- Unit checks passed locally; dependency installation, typechecking, build, and integration checks for this phase are pending remotely. Phase 3 has not started.
+- Unit checks passed locally. GitHub Actions run 39906245434 passed dependency installation, unit checks, lint, typecheck, build, production-server smoke, and all lifecycle integration tests. A verified updated lockfile was committed as a50c36c.
+
+### Phase 3 — user flow implemented; browser verification pending
+
+- Added signup and email/password sign-in, explicit post-registration sign-in, protected server-rendered dashboard, sign-out, legacy `/login` redirect, and safe error/not-found pages.
+- Preserved Authence's dark/green direction with scoped responsive styles. Forms use accessible names/descriptions, real `onSubmit`, native constraints, confirmation checks, pending states, and safe failure feedback.
+- Dashboard validation happens on the server; only the required user profile fields render. Session secrets are not passed into client components. Redirect destinations in the UI are fixed internal routes.
+- Added browser tests for keyboard submission, password mismatch, complete lifecycle/reload/logout, secure HttpOnly cookies, direct protected access, JavaScript errors, invalid credentials, mobile width, and the legacy redirect.
+- React checklist: isolated client boundaries, no unnecessary effects or data fetching, typed forms, labeled fields/landmarks, visible focus, and no server imports in client runtime code.
+- Browser tests and the new UI build are pending in GitHub Actions. No deployment or production database access is involved.
 
 ## 1. Objective and end goal
 

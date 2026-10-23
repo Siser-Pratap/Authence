@@ -50,6 +50,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+      - name: Install browser for end-to-end verification
+        run: npm exec playwright install --with-deps chromium
       - name: Start disposable MongoDB replica set
         run: |
           docker run --detach --name authence-test-mongo --publish 127.0.0.1:27017:27017 mongo:8.0 --replSet rs0 --bind_ip_all
@@ -77,6 +79,7 @@ jobs:
           done
           test "$ready" = 1
           npm run test:integration
+          npm run test:e2e
       - uses: actions/upload-artifact@v4
         with:
           name: verified-lockfile
