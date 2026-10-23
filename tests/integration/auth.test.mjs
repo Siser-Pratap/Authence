@@ -55,6 +55,19 @@ test("authentication lifecycle against the real server and disposable database",
       assert.equal(response.status, 400);
       assert.equal(await db.collection("user").countDocuments({ email: "invalid_" + email }), 0);
     });
+    await t.test("concurrent registrations create one user and one credential account", async () => {
+      const raceEmail = "race_" + email;
+      const responses = await Promise.all(["a", "b"].map((suffix) =>
+        request("/api/auth/sign-up/email", { name: "race_" + suffix + "_" + name, email: raceEmail, password })));
+      assert.ok(responses.some((response) => response.status === 200));
+      for (const response of responses) {
+        const text = await response.text();
+        assert.ok(!text.includes(password) && !text.includes("E11000") && !text.includes(process.env.MONGODB_URI));
+      }
+      assert.equal(await db.collection("user").countDocuments({ email: raceEmail }), 1);
+      const user = await db.collection("user").findOne({ email: raceEmail });
+      assert.equal(await db.collection("account").countDocuments({ userId: user._id }), 1);
+    });
     await t.test("rejects wrong credentials and creates a cookie-backed session for correct credentials", async () => {
       assert.ok((await request("/api/auth/sign-in/email", { email, password: password + "wrong" })).status >= 400);
       const response = await request("/api/auth/sign-in/email", { email, password });
