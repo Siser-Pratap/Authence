@@ -1,8 +1,19 @@
 # Authence: Next.js migration plan
 
-> Status: proposed, awaiting owner review. This document plans the migration; it does not implement it.
-> Planning branch: `docs/nextjs-migration-plan`.
+> Status: implementation authorized by the owner; work proceeds phase by phase on the existing branch.
+> Implementation branch: `docs/nextjs-migration-plan`.
 > Baseline: `main` at `e8c829eb9c360562e52637aec34880dccc3bac7b`.
+
+## Implementation progress
+
+### Phase 0 — code containment completed; operational follow-up remains
+
+- Disabled the legacy signup handler with HTTP 503. It no longer reads credentials, logs secrets, returns passwords, imports database code, or connects to the embedded database.
+- Removed tracked `.env` and `node_modules/` from the branch tree and corrected ignore rules. Existing history is untouched.
+- Added a dependency-free security regression check for the disabled handler.
+- Credential rotation/revocation still requires the database credential owner; removal from source does not revoke the exposed credential. No rotation is claimed.
+- Real users, deployments, and npm consumers have not been inventoried through account access. Preserve them; do not import or delete production data.
+- Direct Git/npm access is blocked by the workspace proxy connection. GitHub connector commits work. Dependency installation and runtime verification must be unblocked before declaring the Next.js foundation complete.
 
 ## 1. Objective and end goal
 
@@ -14,7 +25,7 @@ This is both a framework migration and completion of missing authentication beha
 
 ### Review decisions
 
-These are proposals, not previously agreed product requirements. Review them before implementation begins:
+The owner authorized implementation of the plan. Proceed with these defaults: full Next.js application, TypeScript/App Router, self-hosted authentication, MongoDB, and email/password sign-in. External consumers and real user data remain unverified; no legacy database will be accessed or modified.
 
 | Decision | Proposed direction | Why it matters |
 | --- | --- | --- |
@@ -128,10 +139,10 @@ Complete the phases in order after this plan is reviewed. Use small commits that
 
 ### Phase 0 — Confirm direction and contain existing exposure
 
-- [ ] Resolve the review decisions in section 1, especially app versus SDK and authentication engine.
+- [x] Proceed with the proposed defaults following owner authorization; preserve unknown external consumers/data by avoiding production access.
 - [ ] Inventory consumers, deployed endpoints, real users, required profile fields, and any existing published package usage.
 - [ ] Treat the embedded database credential and any tracked secrets as exposed. Arrange rotation/revocation through the credential owner and remove sensitive logging/response fields before using real credentials.
-- [ ] Record the baseline and create a dedicated implementation branch from the reviewed starting point.
+- [x] Record the baseline and continue on `docs/nextjs-migration-plan`, as explicitly requested by the owner.
 - [ ] Use a disposable database for development and testing. Do not connect to the hardcoded database during the migration.
 
 Exit condition: target scope and data-preservation requirements are recorded; development can proceed with isolated credentials.
@@ -264,7 +275,7 @@ The core migration is complete when the first milestone works through the browse
 - [ ] Confirm the first milestone and the recovery/verification requirement before public launch.
 - [ ] Record requested changes, then approve the revised plan before implementation starts.
 
-Only this migration document is being added on the planning branch. No application migration, database operation, deployment, or merge to `main` is part of this change.
+Implementation is authorized on this branch. Production data operations, deployment, and a merge to `main` remain outside the current scope.
 
 ## References
 
