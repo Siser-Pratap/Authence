@@ -15,7 +15,7 @@
 - Real users, deployments, and npm consumers have not been inventoried through account access. Preserve them; do not import or delete production data.
 - Direct Git/npm access is blocked by the workspace proxy connection. GitHub connector commits work. Dependency installation and runtime verification must be unblocked before declaring the Next.js foundation complete.
 
-### Phase 1 — foundation prepared; exit checks blocked
+### Phase 1 — foundation checks passed in GitHub Actions
 
 - Prepared the scaffold in `/tmp/authence-foundation` before copying it into the repository root.
 - Selected Next.js 16.4.2 from its stable release and verified package/documentation at that tag; React 19.3.1 is the current stable React release. Next.js declares React 19 peer compatibility.
@@ -24,9 +24,19 @@
 - Added placeholder-only `.env.example`, a lazy server-only reader, and tested validation that never prints supplied secrets.
 - Removed the incompatible legacy root lockfile. Generating/reviewing the replacement lockfile is pending; no fabricated dependency lockfile is supplied.
 - `npm test` passed for the configuration and legacy-security checks. React checklist review: server components by default, no unnecessary client boundary/hooks, explicit ReactNode typing, semantic landmarks, scoped styles, responsive sizing, and visible focus styles.
-- `npm install` failed with `EPERM` connecting to the workspace proxy. The subsequent network-permission attempt did not complete; no dependency installation succeeded. Lint, Next.js type generation, typecheck, build, dev server, browser checks, and clean-install verification have NOT run. Phase 1 is not complete, and Phases 2–5 have not started.
-- A GitHub Actions workflow is being added to run the same install/test/lint/typecheck/build checks outside the blocked workspace. It commits the first generated lockfile to this branch only after successful checks; remote verification is pending.
-- Next step once dependency access is available: install dependencies, inspect version-matched bundled docs, generate/review the lockfile, run lint/typecheck/build and a server smoke test, then begin the MongoDB/authentication phase against an isolated database.
+- `npm install` failed with `EPERM` connecting to the workspace proxy. The subsequent network-permission attempt did not complete; no dependency installation succeeded. Lint, Next.js type generation, typecheck, build, dev server, browser checks, and clean-install verification have NOT run. The initial local blocker was resolved for verification by using GitHub Actions. Run 39905715269 passed install, unit tests, lint, typecheck, and production build; the verified root lockfile was committed as 7e77ee9. A production-server smoke test is included in the Phase 2 CI run.
+- Next step once npm access is restored: install dependencies, inspect version-matched bundled docs, generate/review the lockfile, run lint/typecheck/build and a server smoke test, then begin the MongoDB/authentication phase against an isolated database.
+
+### Phase 2 — backend implemented; integration verification pending
+
+- Selected Better Auth 1.7.12 and its version-matched MongoDB adapter; MongoDB driver 7.7.0. The adapter supports transactions on replica sets, which are required for this application.
+- Added server-only lazy auth/database initialization, explicit indexes, normalized email and unique username/profile-name policy, 12–128 character passwords, seven-day database sessions, and database-backed rate limiting.
+- Username is stored in Better Auth's `name` profile field; sign-in remains email/password. No separate username-login feature is enabled.
+- Registration requires an explicit sign-in; this enables the library's duplicate-email enumeration protection. Cookie caching is disabled so revoked sessions are checked against the database.
+- No legacy user import is performed. Existing databases and bcrypt hashes are untouched; any import/reset remains a separate operation after inventory.
+- Added a minimal protected `/api/me` and private/no-store responses; errors omit credentials and driver messages.
+- Added isolated replica-set integration tests against a production Next.js server behind test-only HTTPS termination. CI generates its own short-lived secret/certificate and uses no repository/production secrets.
+- Unit checks passed locally; dependency installation, typechecking, build, and integration checks for this phase are pending remotely. Phase 3 has not started.
 
 ## 1. Objective and end goal
 

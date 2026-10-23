@@ -14,13 +14,17 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/**/*.test.mjs"
+    "test": "node --test tests/config/*.test.mjs tests/security/*.test.mjs tests/validation/*.test.mjs",
+    "test:integration": "node --test tests/integration/*.test.mjs"
   },
   "dependencies": {
     "next": "16.4.2",
     "react": "19.3.1",
     "react-dom": "19.3.1",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "better-auth": "1.7.12",
+    "@better-auth/mongo-adapter": "1.7.12",
+    "mongodb": "7.7.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
