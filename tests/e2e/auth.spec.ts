@@ -16,7 +16,7 @@ test("registration, sign-in, reload, and sign-out through the browser", async ({
   await page.getByLabel("Password", { exact: true }).fill(password);
   await page.getByLabel("Confirm password", { exact: true }).fill(password + "different");
   await page.getByRole("button", { name: "Create account", exact: true }).click();
-  await expect(page.getByRole("alert")).toHaveText("Your passwords do not match.");
+  await expect(page.locator("form").getByRole("alert")).toHaveText("Your passwords do not match.");
   await page.getByLabel("Confirm password", { exact: true }).fill(password);
   await page.getByLabel("Confirm password", { exact: true }).press("Enter");
   await expect(page).toHaveURL(/\/sign-in\?registered=1$/);
@@ -44,7 +44,7 @@ test("sign-in rejects wrong credentials with useful feedback and clears pending 
   await page.getByLabel("Email", { exact: true }).fill("missing_" + randomUUID() + "@example.test");
   await page.getByLabel("Password", { exact: true }).fill(randomUUID());
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page.getByRole("alert")).toContainText("We could not sign you in.");
+  await expect(page.locator("form").getByRole("alert")).toContainText("We could not sign you in.");
   await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
 });
 

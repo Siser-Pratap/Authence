@@ -35,7 +35,7 @@ jobs:
           node-version: 24
       - name: Generate disposable test configuration
         run: |
-          node -e "require('node:fs').appendFileSync(process.env.GITHUB_ENV, 'BETTER_AUTH_SECRET=' + require('node:crypto').randomBytes(48).toString('base64') + '\n')"
+          node -e "const s = require('node:crypto').randomBytes(48).toString('base64'); console.log('::add-mask::' + s); require('node:fs').appendFileSync(process.env.GITHUB_ENV, 'BETTER_AUTH_SECRET=' + s + '\n')"
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout /tmp/authence-test.key -out /tmp/authence-test.crt -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
       - name: Install dependencies
         env:
@@ -46,6 +46,10 @@ jobs:
           else
             npm ci
           fi
+      - name: Inspect dependency audit
+        run: |
+          npm audit --json > /tmp/authence-audit.json || true
+          node -e "const a = require('/tmp/authence-audit.json'); console.log(JSON.stringify({ metadata: a.metadata, vulnerabilities: a.vulnerabilities }, null, 2))"
       - run: npm test
       - run: npm run lint
       - run: npm run typecheck
