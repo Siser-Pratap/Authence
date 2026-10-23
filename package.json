@@ -14,7 +14,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test tests/config/*.test.mjs tests/security/*.test.mjs tests/validation/*.test.mjs",
+    "test": "node --test tests/config/*.test.mjs tests/validation/*.test.mjs",
     "test:integration": "node --test tests/integration/*.test.mjs",
     "test:e2e": "playwright test"
   },

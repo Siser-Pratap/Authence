@@ -39,7 +39,6 @@
     "tests/e2e/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "test-project"
+    "node_modules"
   ]
 }

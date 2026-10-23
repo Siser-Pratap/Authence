@@ -38,14 +38,23 @@
 - Added isolated replica-set integration tests against a production Next.js server behind test-only HTTPS termination. CI generates its own short-lived secret/certificate and uses no repository/production secrets.
 - Unit checks passed locally. GitHub Actions run 39906245434 passed dependency installation, unit checks, lint, typecheck, build, production-server smoke, and all lifecycle integration tests. A verified updated lockfile was committed as a50c36c.
 
-### Phase 3 — user flow implemented; browser verification pending
+### Phase 3 — browser flow verified
 
 - Added signup and email/password sign-in, explicit post-registration sign-in, protected server-rendered dashboard, sign-out, legacy `/login` redirect, and safe error/not-found pages.
 - Preserved Authence's dark/green direction with scoped responsive styles. Forms use accessible names/descriptions, real `onSubmit`, native constraints, confirmation checks, pending states, and safe failure feedback.
 - Dashboard validation happens on the server; only the required user profile fields render. Session secrets are not passed into client components. Redirect destinations in the UI are fixed internal routes.
 - Added browser tests for keyboard submission, password mismatch, complete lifecycle/reload/logout, secure HttpOnly cookies, direct protected access, JavaScript errors, invalid credentials, mobile width, and the legacy redirect.
 - React checklist: isolated client boundaries, no unnecessary effects or data fetching, typed forms, labeled fields/landmarks, visible focus, and no server imports in client runtime code.
-- Browser tests and the new UI build are pending in GitHub Actions. No deployment or production database access is involved.
+- GitHub Actions run 39907066357 passed lint, typecheck, build, eight API lifecycle checks, and all three Chromium tests. The first browser run found a test locator collision with the Next.js route announcer; scoping alerts to the form fixed it. No deployment or production database access is involved.
+
+### Phase 4 — legacy cleanup committed; revalidation pending
+
+- Removed the Vite demo, old React Router components, disabled Express-style handler, Mongoose schema, conflicting package entry files, and obsolete design-reference notes. Their original contents remain in earlier commits.
+- Removed the legacy containment test once the replacement flow was verified, and simplified lint/typecheck scope and unit-test scripts.
+- The application now uses one root manifest/lockfile and contains no active Axios, Express, React Router, Mongoose, or manual JWT implementation.
+- Rewrote README for the implemented Next.js flow, replica-set local setup, commands, environment contracts, breaking npm-package compatibility, and release limitations.
+- No SDK consumers or old data are silently migrated; no production data operations were performed.
+- The dependency audit reported a development-only braces advisory through the Next.js lint plugin. It is being assessed in Phase 5; no forced framework downgrade is planned.
 
 ## 1. Objective and end goal
 
