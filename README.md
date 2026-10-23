@@ -113,4 +113,6 @@ Before public production use, implement email verification and recovery, configu
 
 The project declares ISC in `package.json`.
 
-The dependency audit currently reports a development-only `braces` advisory through the Next.js lint plugin. It is not part of the application runtime dependency graph. The final CI run checks production dependencies and the latest upstream patch availability; this finding must not be silently waived as fixed.
+The final [verification run](https://github.com/Siser-Pratap/Authence/actions/runs/39908134818) passed clean installation, lint/typecheck/build, unit/API/browser tests, concurrent registration, multi-instance rate limits, browser-bundle secret checks, and database-outage handling. The production dependency audit found zero vulnerabilities.
+
+The development dependency graph retains [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) in `braces` through the Next.js lint plugin (five affected package entries). npm reported `3.0.3` as the latest upstream version during verification; no published patch was available. Keep lint input limited to trusted project files and track the upstream fix. This development-only finding remains open.

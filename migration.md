@@ -1,70 +1,38 @@
 # Authence: Next.js migration plan
 
-> Status: implementation authorized by the owner; work proceeds phase by phase on the existing branch.
+> Status: core migration implemented and verified; public-release follow-ups remain.
 > Implementation branch: `docs/nextjs-migration-plan`.
 > Baseline: `main` at `e8c829eb9c360562e52637aec34880dccc3bac7b`.
 
 ## Implementation progress
 
-### Phase 0 — code containment completed; operational follow-up remains
+The owner authorized phase-by-phase implementation on the same branch. The core Next.js migration is implemented. No production data import, deployment, history rewrite, npm publication, or merge to `main` was performed.
 
-- Disabled the legacy signup handler with HTTP 503. It no longer reads credentials, logs secrets, returns passwords, imports database code, or connects to the embedded database.
-- Removed tracked `.env` and `node_modules/` from the branch tree and corrected ignore rules. Existing history is untouched.
-- Added a dependency-free security regression check for the disabled handler.
-- The owner reported completing credential rotation/revocation after the GitGuardian alert. This was not independently verified through MongoDB account access; no old credential will be reused.
-- Real users, deployments, and npm consumers have not been inventoried through account access. Preserve them; do not import or delete production data.
-- Direct Git/npm access is blocked by the workspace proxy connection. GitHub connector commits work. Dependency installation and runtime verification must be unblocked before declaring the Next.js foundation complete.
+| Phase | Result | Evidence |
+| --- | --- | --- |
+| 0 — Containment | Legacy handler disabled, tracked secrets/dependencies removed; owner reported credential rotation. External-user/consumer inventory is deferred until a real data import or cutover. | `b858788` |
+| 1 — Foundation | App Router, strict TypeScript, private application, scoped styles, lazy configuration, and verified lockfile. | [Foundation CI](https://github.com/Siser-Pratap/Authence/actions/runs/39905715269) |
+| 2 — Backend | Better Auth 1.7.12, MongoDB 7.7.0 driver/replica-set transactions, indexes, normalized identifiers, database sessions, rate limits, and protected account API. | [Backend CI](https://github.com/Siser-Pratap/Authence/actions/runs/39906245434) |
+| 3 — User flow | Signup → explicit sign-in → protected dashboard → reload → sign-out; accessible responsive forms and safe retry feedback. | [Browser CI](https://github.com/Siser-Pratap/Authence/actions/runs/39907066357) |
+| 4 — Cleanup | Vite, React Router, old handlers/schema/entry points, and obsolete reference files removed; README rewritten. | [Cleanup CI](https://github.com/Siser-Pratap/Authence/actions/runs/39907471935) |
+| 5 — Core verification | Clean install, lint/typecheck/build, production audit, bundle scan, API/browser flows, multi-instance rate limits, concurrency, and database outage checks. | [Final CI](https://github.com/Siser-Pratap/Authence/actions/runs/39908134818) |
 
-### Phase 1 — foundation checks passed in GitHub Actions
+### Implemented decisions
 
-- Prepared the scaffold in `/tmp/authence-foundation` before copying it into the repository root.
-- Selected Next.js 16.4.2 from its stable release and verified package/documentation at that tag; React 19.3.1 is the current stable React release. Next.js declares React 19 peer compatibility.
-- Added App Router layout/home, CSS Modules, strict TypeScript, npm scripts, Node.js 24 selection, and the official flat ESLint configuration pattern.
-- Converted the root to a private application and retired its old package entry metadata. Legacy reference files remain until later phases.
-- Added placeholder-only `.env.example`, a lazy server-only reader, and tested validation that never prints supplied secrets.
-- Removed the incompatible legacy root lockfile. Generating/reviewing the replacement lockfile is pending; no fabricated dependency lockfile is supplied.
-- `npm test` passed for the configuration and legacy-security checks. React checklist review: server components by default, no unnecessary client boundary/hooks, explicit ReactNode typing, semantic landmarks, scoped styles, responsive sizing, and visible focus styles.
-- `npm install` failed with `EPERM` connecting to the workspace proxy. The subsequent network-permission attempt did not complete; no dependency installation succeeded. Lint, Next.js type generation, typecheck, build, dev server, browser checks, and clean-install verification have NOT run. The initial local blocker was resolved for verification by using GitHub Actions. Run 39905715269 passed install, unit tests, lint, typecheck, and production build; the verified root lockfile was committed as 7e77ee9. A production-server smoke test is included in the Phase 2 CI run.
-- Next step once npm access is restored: install dependencies, inspect version-matched bundled docs, generate/review the lockfile, run lint/typecheck/build and a server smoke test, then begin the MongoDB/authentication phase against an isolated database.
+- Full Next.js application, Node.js 24, Next.js 16.4.2, React 19.3.1, TypeScript, and self-hosted Better Auth with the version-matched MongoDB adapter.
+- Explicit new database name; replica set/sharded cluster required for transactions. No legacy user, bcrypt hash, or application-key import.
+- Usernames are normalized unique profile names stored in Better Auth's `name` field. Sign-in uses normalized email/password; passwords are 12–128 characters.
+- Registration does not auto-sign in, enabling duplicate-email enumeration protection. Sessions last seven days; cookie caching is disabled so revocation is checked in the database.
+- Shared database-backed throttling; exact trusted origin; fixed internal UI redirects; server-side session checks on dashboard and account API; private/no-store responses.
+- API tests and Chromium use only a disposable `authence_test*` database and loopback servers. CI generates and masks its own temporary secrets and TLS certificate, then destroys the test environment.
 
-### Phase 2 — backend integration checks passed
+### Verification limits and remaining work
 
-- Selected Better Auth 1.7.12 and its version-matched MongoDB adapter; MongoDB driver 7.7.0. The adapter supports transactions on replica sets, which are required for this application.
-- Added server-only lazy auth/database initialization, explicit indexes, normalized email and unique username/profile-name policy, 12–128 character passwords, seven-day database sessions, and database-backed rate limiting.
-- Username is stored in Better Auth's `name` profile field; sign-in remains email/password. No separate username-login feature is enabled.
-- Registration requires an explicit sign-in; this enables the library's duplicate-email enumeration protection. Cookie caching is disabled so revoked sessions are checked against the database.
-- No legacy user import is performed. Existing databases and bcrypt hashes are untouched; any import/reset remains a separate operation after inventory.
-- Added a minimal protected `/api/me` and private/no-store responses; errors omit credentials and driver messages.
-- Added isolated replica-set integration tests against a production Next.js server behind test-only HTTPS termination. CI generates its own short-lived secret/certificate and uses no repository/production secrets.
-- Unit checks passed locally. GitHub Actions run 39906245434 passed dependency installation, unit checks, lint, typecheck, build, production-server smoke, and all lifecycle integration tests. A verified updated lockfile was committed as a50c36c.
-
-### Phase 3 — browser flow verified
-
-- Added signup and email/password sign-in, explicit post-registration sign-in, protected server-rendered dashboard, sign-out, legacy `/login` redirect, and safe error/not-found pages.
-- Preserved Authence's dark/green direction with scoped responsive styles. Forms use accessible names/descriptions, real `onSubmit`, native constraints, confirmation checks, pending states, and safe failure feedback.
-- Dashboard validation happens on the server; only the required user profile fields render. Session secrets are not passed into client components. Redirect destinations in the UI are fixed internal routes.
-- Added browser tests for keyboard submission, password mismatch, complete lifecycle/reload/logout, secure HttpOnly cookies, direct protected access, JavaScript errors, invalid credentials, mobile width, and the legacy redirect.
-- React checklist: isolated client boundaries, no unnecessary effects or data fetching, typed forms, labeled fields/landmarks, visible focus, and no server imports in client runtime code.
-- GitHub Actions run 39907066357 passed lint, typecheck, build, eight API lifecycle checks, and all three Chromium tests. The first browser run found a test locator collision with the Next.js route announcer; scoping alerts to the form fixed it. No deployment or production database access is involved.
-
-### Phase 4 — legacy cleanup verified
-
-- Removed the Vite demo, old React Router components, disabled Express-style handler, Mongoose schema, conflicting package entry files, and obsolete design-reference notes. Their original contents remain in earlier commits.
-- Removed the legacy containment test once the replacement flow was verified, and simplified lint/typecheck scope and unit-test scripts.
-- The application now uses one root manifest/lockfile and contains no active Axios, Express, React Router, Mongoose, or manual JWT implementation.
-- Rewrote README for the implemented Next.js flow, replica-set local setup, commands, environment contracts, breaking npm-package compatibility, and release limitations.
-- No SDK consumers or old data are silently migrated; no production data operations were performed.
-- GitHub Actions run 39907471935 passed the full unit/build/API/browser suite after cleanup. The dependency audit reported a development-only braces advisory through the Next.js lint plugin; Phase 5 checks the production dependency graph and upstream patch availability.
-
-### Phase 5 — final verification in progress
-
-- CI now performs a clean `npm ci` from the verified lockfile and rejects high/critical production dependency findings.
-- Added scans proving that production browser bundles do not contain the server secret, MongoDB URI, or database environment references.
-- Expanded API checks for normalized input, duplicate registration, invalid server-side profile input, and external callbacks.
-- Added a second production Next.js process so the rate-limit test alternates instances against one shared MongoDB store.
-- Expanded browser checks for history navigation after logout and network-error retry; restricted all integration/browser tests to local URLs and explicitly named test databases.
-- Added a real database-outage test after the browser/API suite. All test secrets are generated per run, masked in workflow logs, and never stored in the repository.
-- Final checks are pending. Public release still requires verification/recovery email flows, real-host configuration, and a separate production cutover; the migration stays in development/private evaluation scope.
+- Local Git/npm access remained blocked by the workspace proxy. Dependency installation and complete runtime verification were performed in GitHub Actions; local dependency-free unit checks also passed.
+- The final production dependency audit found zero vulnerabilities. The full development graph still reports [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm) in `braces` through the Next.js lint plugin (five affected package entries). npm reported `3.0.3` as the latest release; no published fix was available at verification time. Keep lint input limited to trusted project files and track the upstream fix. This finding is not marked resolved.
+- No real MongoDB account access was used to verify the owner's credential rotation or inventory existing users. Those users remain untouched.
+- Email verification, password recovery/delivery, real-host proxy configuration, production monitoring, and deployment/rollback checks remain prerequisites for a public launch. The delivered milestone is for development/private evaluation.
+- SDK/package consumers need a separate compatibility design. The private application intentionally retires the old npm export contract.
 
 ## 1. Objective and end goal
 
@@ -88,9 +56,9 @@ The owner authorized implementation of the plan. Proceed with these defaults: fu
 | First milestone versus public release | Complete the core flow first; require recovery and email verification before a public production launch. | Email delivery and abuse controls need their own configuration and testing. |
 | Hosting | Keep the application compatible with a standard Node.js Next.js deployment. Choose a host later. | No deployment, paid integration, domain change, or production cutover is included in this planning change. |
 
-## 2. Current state to migrate
+## 2. Original state at the baseline
 
-Source of truth: [README.md](./README.md) and the implementation on the baseline commit.
+Baseline reference: [README at the starting commit](https://github.com/Siser-Pratap/Authence/blob/e8c829eb9c360562e52637aec34880dccc3bac7b/README.md). This section describes the original implementation, not the migrated application.
 
 - Root package: ES modules, version `1.0.4`, with no development server or build script.
 - `index.js` exports a backend signup handler; `index.d.mjs` exposes a different frontend entry. There is no consistent public export contract.
@@ -191,10 +159,10 @@ Complete the phases in order after this plan is reviewed. Use small commits that
 ### Phase 0 — Confirm direction and contain existing exposure
 
 - [x] Proceed with the proposed defaults following owner authorization; preserve unknown external consumers/data by avoiding production access.
-- [ ] Inventory consumers, deployed endpoints, real users, required profile fields, and any existing published package usage.
-- [ ] Treat the embedded database credential and any tracked secrets as exposed. Arrange rotation/revocation through the credential owner and remove sensitive logging/response fields before using real credentials.
+- [ ] Before a legacy import or production cutover, inventory external consumers, deployments, real users, and published package usage. Deferred: no such import/cutover was performed.
+- [x] Treat the embedded database credential and any tracked secrets as exposed. Arrange rotation/revocation through the credential owner and remove sensitive logging/response fields before using real credentials.
 - [x] Record the baseline and continue on `docs/nextjs-migration-plan`, as explicitly requested by the owner.
-- [ ] Use a disposable database for development and testing. Do not connect to the hardcoded database during the migration.
+- [x] Use a disposable database for development and testing. Do not connect to the hardcoded database during the migration.
 
 Exit condition: target scope and data-preservation requirements are recorded; development can proceed with isolated credentials.
 
@@ -202,7 +170,7 @@ Exit condition: target scope and data-preservation requirements are recorded; de
 
 - [x] Scaffold into a temporary directory first, then move the required files into the root without overwriting project documentation.
 - [x] Add Next.js/React/TypeScript, strict compiler settings, Next-compatible lint configuration, and scripts for `dev`, `build`, `start`, `lint`, and `typecheck`.
-- [ ] Add root layout, home page, metadata, global style tokens, and the intended route skeleton.
+- [x] Add root layout, home page, metadata, global style tokens, and the intended route skeleton.
 - [x] Mark the root package private if the full-application proposal is accepted; retire the old `main`/`module` contract as a documented breaking change.
 - [x] Correct `.gitignore`; stop tracking `node_modules/` and `.env` in future commits while retaining the source files. Add `.next/`, coverage, and test-output ignores.
 - [x] Add `.env.example` containing placeholders only, and make missing required configuration fail clearly without printing values.
@@ -211,46 +179,46 @@ Exit condition: a clean dependency install, development server, lint, typecheck,
 
 ### Phase 2 — Establish data and authentication contracts
 
-- [ ] Validate the chosen authentication library's current MongoDB adapter, Node.js requirements, schema/index setup, session model, rate-limit support, and password-hash import options.
-- [ ] Configure server-only database access and the auth handler. If Better Auth is selected, mount its Next.js handler under `/api/auth/[...all]` and use its supported MongoDB adapter.
-- [ ] Define normalized email/username rules, password policy, duplicate behavior, session lifetime, safe redirects, and error categories.
-- [ ] Add appropriate database indexes; do not rely on browser checks or treat a Mongoose `unique` declaration as an input validator.
-- [ ] Resolve old-user compatibility before creating or modifying production collections; follow section 6.
-- [ ] Replace the old per-user `key` requirement with a deliberately designed schema. It must not be copied as proof of authentication or used as a client credential.
+- [x] Validate the chosen authentication library's current MongoDB adapter, Node.js requirements, schema/index setup, session model, rate-limit support, and password-hash import options.
+- [x] Configure server-only database access and the auth handler. If Better Auth is selected, mount its Next.js handler under `/api/auth/[...all]` and use its supported MongoDB adapter.
+- [x] Define normalized email/username rules, password policy, duplicate behavior, session lifetime, safe redirects, and error categories.
+- [x] Add appropriate database indexes; do not rely on browser checks or treat a Mongoose `unique` declaration as an input validator.
+- [x] Resolve old-user compatibility before creating or modifying production collections; follow section 6.
+- [x] Replace the old per-user `key` requirement with a deliberately designed schema. It must not be copied as proof of authentication or used as a client credential.
 
 Exit condition: a disposable database supports user creation and session lifecycle through the selected auth engine, with safe responses and predictable failure behavior.
 
 ### Phase 3 — Port and complete the user experience
 
-- [ ] Rebuild signup/sign-in as typed forms with proper `onSubmit`, labels, autocomplete attributes, keyboard support, and accessible validation messages.
-- [ ] Preserve useful branding/styles while isolating CSS and checking narrow/mobile layouts.
-- [ ] Fix password confirmation, prevent invalid submissions, handle request failures accurately, and reset pending state on every outcome.
-- [ ] Add real sign-in and sign-out behavior; handle duplicate email, wrong credentials, expired sessions, and temporary service failures without leaking sensitive details.
-- [ ] Create the protected dashboard and server-side session checks; verify both direct navigation and authenticated reloads.
-- [ ] Standardize `/sign-in`, `/sign-up`, and `/dashboard`. Redirect the old `/login/` link to `/sign-in` if retaining compatibility is useful.
-- [ ] Allow redirects only to approved internal destinations and prevent redirect loops.
+- [x] Rebuild signup/sign-in as typed forms with proper `onSubmit`, labels, autocomplete attributes, keyboard support, and accessible validation messages.
+- [x] Preserve useful branding/styles while isolating CSS and checking narrow/mobile layouts.
+- [x] Fix password confirmation, prevent invalid submissions, handle request failures accurately, and reset pending state on every outcome.
+- [x] Add real sign-in and sign-out behavior; handle duplicate email, wrong credentials, expired sessions, and temporary service failures without leaking sensitive details.
+- [x] Create the protected dashboard and server-side session checks; verify both direct navigation and authenticated reloads.
+- [x] Standardize `/sign-in`, `/sign-up`, and `/dashboard`. Redirect the old `/login/` link to `/sign-in` if retaining compatibility is useful.
+- [x] Allow redirects only to approved internal destinations and prevent redirect loops.
 
 Exit condition: registration → authenticated session (or explicit sign-in, according to the chosen policy) → dashboard → sign-out works in the browser.
 
 ### Phase 4 — Remove obsolete structure and document the new contract
 
-- [ ] Remove `test-project/` after its useful assets and behavior have been replaced.
-- [ ] Remove the old Express-style signup handler, duplicate router setup, conflicting entry points, stale schema, and unused dependencies after compatibility checks.
-- [ ] Decide whether to archive or remove the `signup` design-reference file and `ideas` notes; do not leave them presented as executable application code.
-- [ ] Regenerate one root lockfile and verify the dependency graph from a clean checkout.
-- [ ] Rewrite README setup, environment configuration, commands, architecture, supported flows, limitations, and migration/breaking-change notes.
-- [ ] Record a separate SDK/workspace follow-up if package consumers must be supported; do not publish the Next.js application as a replacement npm library.
+- [x] Remove `test-project/` after its useful assets and behavior have been replaced.
+- [x] Remove the old Express-style signup handler, duplicate router setup, conflicting entry points, stale schema, and unused dependencies after compatibility checks.
+- [x] Decide whether to archive or remove the `signup` design-reference file and `ideas` notes; do not leave them presented as executable application code.
+- [x] Regenerate one root lockfile and verify the dependency graph from a clean checkout.
+- [x] Rewrite README setup, environment configuration, commands, architecture, supported flows, limitations, and migration/breaking-change notes.
+- [x] Record a separate SDK/workspace follow-up if package consumers must be supported; do not publish the Next.js application as a replacement npm library.
 
 Exit condition: one coherent Next.js application remains, with no Vite or React Router dependency in its active runtime.
 
 ### Phase 5 — Verify and prepare release
 
-- [ ] Add CI for clean install, lint, typecheck, focused tests, and `next build`; run a smoke test against `next start`.
-- [ ] Run integration tests with an isolated test database and browser tests against the actual UI/API/database flow.
-- [ ] Inspect client bundles and network responses for database configuration, auth secrets, password hashes, and plaintext passwords.
-- [ ] Confirm shared rate limiting works across application instances; an in-memory counter alone is insufficient for a multi-instance deployment.
-- [ ] Add recovery and email-verification flows with a chosen email provider before public production launch, or explicitly keep the release limited to development/private evaluation.
-- [ ] If production deployment is later requested, validate HTTPS cookies, trusted origins, database network access/region, email callbacks, monitoring, and rollback on a preview first.
+- [x] Add CI for clean install, lint, typecheck, focused tests, and `next build`; run a smoke test against `next start`.
+- [x] Run integration tests with an isolated test database and browser tests against the actual UI/API/database flow.
+- [x] Inspect client bundles and network responses for database configuration, auth secrets, password hashes, and plaintext passwords.
+- [x] Confirm shared rate limiting works across application instances; an in-memory counter alone is insufficient for a multi-instance deployment.
+- [x] Add recovery and email-verification flows with a chosen email provider before public production launch, or explicitly keep the release limited to development/private evaluation.
+- [ ] Deferred until deployment is requested: validate HTTPS cookies, trusted origins, database network access/region, email callbacks, monitoring, and rollback on a preview first.
 
 Exit condition: the acceptance criteria below pass, known limitations are explicit, and release readiness is supported by evidence.
 
@@ -319,14 +287,20 @@ The core migration is complete when the first milestone works through the browse
 
 ## 10. Review checklist
 
-- [ ] Confirm the full Next.js application goal, or request a workspace/SDK-oriented revision.
-- [ ] Confirm TypeScript + App Router and the proposed self-hosted authentication approach.
-- [ ] Confirm MongoDB retention and whether real users or external consumers must be preserved.
-- [ ] Confirm email as the login identifier and username as profile data.
-- [ ] Confirm the first milestone and the recovery/verification requirement before public launch.
-- [ ] Record requested changes, then approve the revised plan before implementation starts.
+- [x] Proceed with the full Next.js application goal following owner authorization.
+- [x] Proceed with TypeScript + App Router and self-hosted Better Auth.
+- [x] Retain MongoDB; preserve unknown legacy users/consumers by avoiding production access and documenting the breaking package change.
+- [x] Use email as the login identifier and normalized username as profile data.
+- [x] Deliver the core milestone; require recovery/verification work before public launch.
+- [x] Owner authorized implementation on the same branch; source changes and evidence are recorded above.
 
 Implementation is authorized on this branch. Production data operations, deployment, and a merge to `main` remain outside the current scope.
+
+## Final verification record
+
+Verified application revision: `8a999928548119d649a51db68ee26d685f743afa`. GitHub Actions run `39908134818` completed successfully. The closing documentation commit does not change application code or dependencies.
+
+Passed: clean locked install, production dependency audit (zero vulnerabilities), lint, typecheck, production build, seven unit checks, browser bundle scan, eleven API scenarios including concurrent registration and multi-instance throttling, four Chromium tests, and the database-outage response check. A normal development-server session was not separately verified in the blocked local workspace; runtime checks used production builds in CI.
 
 ## References
 
