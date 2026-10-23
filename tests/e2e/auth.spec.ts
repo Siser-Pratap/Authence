@@ -36,6 +36,8 @@ test("registration, sign-in, reload, and sign-out through the browser", async ({
   expect((await context.request.get("/api/me")).status()).toBe(401);
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/sign-in$/);
+  await page.goBack();
+  await expect(page.getByRole("heading", { name: "Welcome, " + name + "." })).not.toBeVisible();
   expect(pageErrors).toEqual([]);
 });
 
@@ -54,4 +56,15 @@ test("auth forms fit a narrow viewport and legacy login redirects", async ({ pag
   await expect(page).toHaveURL(/\/sign-in$/);
   await expect(page.getByRole("heading", { name: "Sign in", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+
+test("network failure allows retry without leaving the form pending", async ({ page }) => {
+  await page.goto("/sign-in");
+  await page.route("**/api/auth/sign-in/email", (route) => route.abort("failed"));
+  await page.getByLabel("Email", { exact: true }).fill("network@example.test");
+  await page.getByLabel("Password", { exact: true }).fill(randomUUID());
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.locator("form").getByRole("alert")).toContainText(/temporarily unavailable|could not reach/i);
+  await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeEnabled();
 });

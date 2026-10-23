@@ -41,7 +41,9 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       if (result.error) {
         setError(result.error.status === 429
           ? "Too many attempts. Please wait a minute and try again."
-          : signingUp
+          : !result.error.status || result.error.status >= 500
+            ? "Authentication is temporarily unavailable. Please try again."
+            : signingUp
             ? "We could not create your account. Check your details or try signing in."
             : "We could not sign you in. Check your email and password and try again.");
         return;

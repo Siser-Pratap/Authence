@@ -22,9 +22,9 @@ jobs:
       MONGODB_DB_NAME: authence_test_ci
       BETTER_AUTH_URL: https://localhost:3443
       AUTHENCE_TEST_URL: https://localhost:3443
+      AUTHENCE_SECOND_TEST_URL: http://127.0.0.1:3001
       AUTHENCE_TEST_TLS_KEY: /tmp/authence-test.key
       AUTHENCE_TEST_TLS_CERT: /tmp/authence-test.crt
-      NODE_EXTRA_CA_CERTS: /tmp/authence-test.crt
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
@@ -37,23 +37,21 @@ jobs:
         run: |
           node -e "const s = require('node:crypto').randomBytes(48).toString('base64'); console.log('::add-mask::' + s); require('node:fs').appendFileSync(process.env.GITHUB_ENV, 'BETTER_AUTH_SECRET=' + s + '\n')"
           openssl req -x509 -newkey rsa:2048 -nodes -days 1 -keyout /tmp/authence-test.key -out /tmp/authence-test.crt -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
-      - name: Install dependencies
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-        run: |
-          if [ "$EVENT_NAME" = push ]; then
-            npm install
-          else
-            npm ci
-          fi
+      - name: Install locked dependencies
+        run: npm ci
       - name: Inspect dependency audit
         run: |
           npm audit --json > /tmp/authence-audit.json || true
           node -e "const a = require('/tmp/authence-audit.json'); console.log(JSON.stringify({ metadata: a.metadata, vulnerabilities: a.vulnerabilities }, null, 2))"
+      - name: Check production dependency security
+        run: npm audit --omit=dev --audit-level=high
+      - name: Check latest upstream braces release
+        run: npm view braces version
       - run: npm test
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run test:bundle
       - name: Install browser for end-to-end verification
         run: npm exec playwright install --with-deps chromium
       - name: Start disposable MongoDB replica set
@@ -70,20 +68,26 @@ jobs:
           done
           exit 1
       - name: Verify production server and authentication lifecycle
+        env:
+          NODE_EXTRA_CA_CERTS: /tmp/authence-test.crt
         run: |
           npm start > /tmp/authence-server.log 2>&1 &
           next_pid=$!
+          npm start -- --port 3001 > /tmp/authence-second-server.log 2>&1 &
+          second_pid=$!
           node scripts/test-proxy.mjs > /tmp/authence-proxy.log 2>&1 &
           proxy_pid=$!
-          trap 'kill "$next_pid" "$proxy_pid" 2>/dev/null || true' EXIT
+          trap 'kill "$next_pid" "$second_pid" "$proxy_pid" 2>/dev/null || true' EXIT
           ready=0
           for attempt in $(seq 1 45); do
-            if curl --fail --silent --cacert "$AUTHENCE_TEST_TLS_CERT" "$AUTHENCE_TEST_URL" >/dev/null; then ready=1; break; fi
+            if curl --fail --silent --cacert "$AUTHENCE_TEST_TLS_CERT" "$AUTHENCE_TEST_URL" >/dev/null && curl --fail --silent "$AUTHENCE_SECOND_TEST_URL" >/dev/null; then ready=1; break; fi
             sleep 1
           done
           test "$ready" = 1
           npm run test:integration
           npm run test:e2e
+          docker stop authence-test-mongo >/dev/null
+          npm run test:failure
       - uses: actions/upload-artifact@v4
         with:
           name: verified-lockfile

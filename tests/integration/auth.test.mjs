@@ -12,11 +12,14 @@ const password = randomUUID() + "!Strong";
 const name = "test_" + randomUUID().replaceAll("-", "").slice(0,16);
 const email = name + "@example.test";
 const origin = new URL(base).origin;
+if (!["localhost", "127.0.0.1"].includes(new URL(base).hostname)) throw new Error("Tests require a loopback server URL");
+const secondBase = process.env.AUTHENCE_SECOND_TEST_URL;
+if (secondBase && !["localhost", "127.0.0.1"].includes(new URL(secondBase).hostname)) throw new Error("Second test server must use loopback");
 
-async function request(path, body, cookie) {
-  return fetch(base + path, {
+async function request(path, body, cookie, server = base) {
+  return fetch(server + path, {
     method: body === undefined ? "GET" : "POST",
-    headers: { Origin: origin, ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(cookie ? { Cookie: cookie } : {}) },
+    headers: { Origin: origin, "x-forwarded-for": "127.0.0.1", ...(body === undefined ? {} : { "Content-Type": "application/json" }), ...(cookie ? { Cookie: cookie } : {}) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     redirect: "manual",
   });
@@ -32,7 +35,7 @@ test("authentication lifecycle against the real server and disposable database",
       assert.equal((await request("/api/me", undefined, "better-auth.session_token=forged")).status, 401);
     });
     await t.test("registration normalizes identifiers and hashes passwords", async () => {
-      const response = await request("/api/auth/sign-up/email", { name, email, password });
+      const response = await request("/api/auth/sign-up/email", { name: name.toUpperCase(), email: email.toUpperCase(), password });
       assert.equal(response.status, 200);
       const text = await response.text();
       assert.ok(!text.includes(password));
@@ -41,6 +44,16 @@ test("authentication lifecycle against the real server and disposable database",
       assert.equal(user.password, undefined);
       const account = await db.collection("account").findOne({ userId: user._id });
       assert.ok(account?.password && account.password !== password);
+    });
+    await t.test("duplicate registration cannot replace the existing account", async () => {
+      const response = await request("/api/auth/sign-up/email", { name, email, password: randomUUID() + "Different" });
+      assert.equal(response.status, 200);
+      assert.equal(await db.collection("user").countDocuments({ email }), 1);
+    });
+    await t.test("server-side validation rejects invalid profile input", async () => {
+      const response = await request("/api/auth/sign-up/email", { name: "invalid name", email: "invalid_" + email, password });
+      assert.equal(response.status, 400);
+      assert.equal(await db.collection("user").countDocuments({ email: "invalid_" + email }), 0);
     });
     await t.test("rejects wrong credentials and creates a cookie-backed session for correct credentials", async () => {
       assert.ok((await request("/api/auth/sign-in/email", { email, password: password + "wrong" })).status >= 400);
@@ -64,6 +77,10 @@ test("authentication lifecycle against the real server and disposable database",
       });
       assert.equal(response.status, 403);
     });
+    await t.test("rejects external callback destinations", async () => {
+      const response = await request("/api/auth/sign-in/email", { email, password, callbackURL: "https://untrusted.example/steal" });
+      assert.ok([400, 403].includes(response.status));
+    });
     await t.test("sign-out invalidates a previously issued cookie", async () => {
       assert.equal((await request("/api/auth/sign-out", {}, cookie)).status, 200);
       assert.equal((await request("/api/me", undefined, cookie)).status, 401);
@@ -75,11 +92,11 @@ test("authentication lifecycle against the real server and disposable database",
       await db.collection("session").updateMany({ userId: user._id }, { $set: { expiresAt: new Date(0) } });
       assert.equal((await request("/api/me", undefined, expiredCookie)).status, 401);
     });
-    await t.test("rate limiting persists in shared MongoDB storage", async () => {
+    await t.test("rate limiting is shared across application instances", async () => {
       await db.collection("rateLimit").deleteMany({});
       const statuses = [];
       for (let i = 0; i < 6; i++) {
-        statuses.push((await request("/api/auth/sign-in/email", { email, password: password + "wrong" })).status);
+        statuses.push((await request("/api/auth/sign-in/email", { email, password: password + "wrong" }, undefined, secondBase && i % 2 ? secondBase : base)).status);
       }
       assert.ok(statuses.includes(429), JSON.stringify(statuses));
       assert.ok(await db.collection("rateLimit").countDocuments() > 0);

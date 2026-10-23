@@ -16,7 +16,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/config/*.test.mjs tests/validation/*.test.mjs",
     "test:integration": "node --test tests/integration/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:bundle": "node --test tests/bundle/*.test.mjs",
+    "test:failure": "node --test tests/failure/*.test.mjs"
   },
   "dependencies": {
     "next": "16.4.2",

@@ -71,11 +71,13 @@ Open `http://localhost:3000`. Database connections and indexes initialize lazily
 | `npm run typecheck` | Generate route types and check TypeScript. |
 | `npm test` | Run configuration and identifier-validation unit tests. |
 | `npm run test:integration` | Test the real API/database lifecycle against an already running isolated test server. |
+| `npm run test:bundle` | Scan a production build for server configuration in browser bundles. |
+| `npm run test:failure` | Verify safe API failures after the disposable test database is stopped. |
 | `npm run test:e2e` | Run Chromium browser tests against an already running isolated test server. |
 
 Integration/browser tests are restricted to loopback URLs and an `authence_test*` database. They create synthetic accounts, expire their sessions, and clear test rate-limit counters. They must never run against real accounts. Configure the server and test process to use the same isolated database and origin.
 
-CI creates a disposable MongoDB replica set, generates temporary test configuration and an HTTPS certificate, and runs the production Next.js server behind a test-only HTTPS proxy. Playwright's certificate exception applies to this test setup; application TLS verification is not disabled.
+CI uses `npm ci` and a production dependency audit. It creates a disposable MongoDB replica set, generates temporary test configuration and an HTTPS certificate, and runs the production Next.js server behind a test-only HTTPS proxy. Playwright's certificate exception applies to this test setup; application TLS verification is not disabled.
 
 ## Structure
 
@@ -110,3 +112,5 @@ Before public production use, implement email verification and recovery, configu
 ## License
 
 The project declares ISC in `package.json`.
+
+The dependency audit currently reports a development-only `braces` advisory through the Next.js lint plugin. It is not part of the application runtime dependency graph. The final CI run checks production dependencies and the latest upstream patch availability; this finding must not be silently waived as fixed.

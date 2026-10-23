@@ -47,14 +47,24 @@
 - React checklist: isolated client boundaries, no unnecessary effects or data fetching, typed forms, labeled fields/landmarks, visible focus, and no server imports in client runtime code.
 - GitHub Actions run 39907066357 passed lint, typecheck, build, eight API lifecycle checks, and all three Chromium tests. The first browser run found a test locator collision with the Next.js route announcer; scoping alerts to the form fixed it. No deployment or production database access is involved.
 
-### Phase 4 — legacy cleanup committed; revalidation pending
+### Phase 4 — legacy cleanup verified
 
 - Removed the Vite demo, old React Router components, disabled Express-style handler, Mongoose schema, conflicting package entry files, and obsolete design-reference notes. Their original contents remain in earlier commits.
 - Removed the legacy containment test once the replacement flow was verified, and simplified lint/typecheck scope and unit-test scripts.
 - The application now uses one root manifest/lockfile and contains no active Axios, Express, React Router, Mongoose, or manual JWT implementation.
 - Rewrote README for the implemented Next.js flow, replica-set local setup, commands, environment contracts, breaking npm-package compatibility, and release limitations.
 - No SDK consumers or old data are silently migrated; no production data operations were performed.
-- The dependency audit reported a development-only braces advisory through the Next.js lint plugin. It is being assessed in Phase 5; no forced framework downgrade is planned.
+- GitHub Actions run 39907471935 passed the full unit/build/API/browser suite after cleanup. The dependency audit reported a development-only braces advisory through the Next.js lint plugin; Phase 5 checks the production dependency graph and upstream patch availability.
+
+### Phase 5 — final verification in progress
+
+- CI now performs a clean `npm ci` from the verified lockfile and rejects high/critical production dependency findings.
+- Added scans proving that production browser bundles do not contain the server secret, MongoDB URI, or database environment references.
+- Expanded API checks for normalized input, duplicate registration, invalid server-side profile input, and external callbacks.
+- Added a second production Next.js process so the rate-limit test alternates instances against one shared MongoDB store.
+- Expanded browser checks for history navigation after logout and network-error retry; restricted all integration/browser tests to local URLs and explicitly named test databases.
+- Added a real database-outage test after the browser/API suite. All test secrets are generated per run, masked in workflow logs, and never stored in the repository.
+- Final checks are pending. Public release still requires verification/recovery email flows, real-host configuration, and a separate production cutover; the migration stays in development/private evaluation scope.
 
 ## 1. Objective and end goal
 
