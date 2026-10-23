@@ -1,0 +1,66 @@
+name: Next.js foundation
+
+on:
+  push:
+    branches: [docs/nextjs-migration-plan]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: foundation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+      - run: npm test
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-lockfile
+          path: package-lock.json
+          if-no-files-found: error
+
+  initial-lockfile:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/docs/nextjs-migration-plan'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-lockfile
+      - name: Commit initial verified lockfile
+        env:
+          BRANCH_NAME: ${{ github.ref_name }}
+        run: |
+          if ! git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "build: lock verified Next.js foundation dependencies"
+            git push origin "HEAD:$BRANCH_NAME"
+          fi

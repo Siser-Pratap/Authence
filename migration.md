@@ -11,9 +11,22 @@
 - Disabled the legacy signup handler with HTTP 503. It no longer reads credentials, logs secrets, returns passwords, imports database code, or connects to the embedded database.
 - Removed tracked `.env` and `node_modules/` from the branch tree and corrected ignore rules. Existing history is untouched.
 - Added a dependency-free security regression check for the disabled handler.
-- Credential rotation/revocation still requires the database credential owner; removal from source does not revoke the exposed credential. No rotation is claimed.
+- The owner reported completing credential rotation/revocation after the GitGuardian alert. This was not independently verified through MongoDB account access; no old credential will be reused.
 - Real users, deployments, and npm consumers have not been inventoried through account access. Preserve them; do not import or delete production data.
 - Direct Git/npm access is blocked by the workspace proxy connection. GitHub connector commits work. Dependency installation and runtime verification must be unblocked before declaring the Next.js foundation complete.
+
+### Phase 1 — foundation prepared; exit checks blocked
+
+- Prepared the scaffold in `/tmp/authence-foundation` before copying it into the repository root.
+- Selected Next.js 16.4.2 from its stable release and verified package/documentation at that tag; React 19.3.1 is the current stable React release. Next.js declares React 19 peer compatibility.
+- Added App Router layout/home, CSS Modules, strict TypeScript, npm scripts, Node.js 24 selection, and the official flat ESLint configuration pattern.
+- Converted the root to a private application and retired its old package entry metadata. Legacy reference files remain until later phases.
+- Added placeholder-only `.env.example`, a lazy server-only reader, and tested validation that never prints supplied secrets.
+- Removed the incompatible legacy root lockfile. Generating/reviewing the replacement lockfile is pending; no fabricated dependency lockfile is supplied.
+- `npm test` passed for the configuration and legacy-security checks. React checklist review: server components by default, no unnecessary client boundary/hooks, explicit ReactNode typing, semantic landmarks, scoped styles, responsive sizing, and visible focus styles.
+- `npm install` failed with `EPERM` connecting to the workspace proxy. The subsequent network-permission attempt did not complete; no dependency installation succeeded. Lint, Next.js type generation, typecheck, build, dev server, browser checks, and clean-install verification have NOT run. Phase 1 is not complete, and Phases 2–5 have not started.
+- A GitHub Actions workflow is being added to run the same install/test/lint/typecheck/build checks outside the blocked workspace. It commits the first generated lockfile to this branch only after successful checks; remote verification is pending.
+- Next step once dependency access is available: install dependencies, inspect version-matched bundled docs, generate/review the lockfile, run lint/typecheck/build and a server smoke test, then begin the MongoDB/authentication phase against an isolated database.
 
 ## 1. Objective and end goal
 
@@ -149,12 +162,12 @@ Exit condition: target scope and data-preservation requirements are recorded; de
 
 ### Phase 1 — Establish the Next.js foundation
 
-- [ ] Scaffold into a temporary directory first, then move the required files into the root without overwriting project documentation.
-- [ ] Add Next.js/React/TypeScript, strict compiler settings, Next-compatible lint configuration, and scripts for `dev`, `build`, `start`, `lint`, and `typecheck`.
+- [x] Scaffold into a temporary directory first, then move the required files into the root without overwriting project documentation.
+- [x] Add Next.js/React/TypeScript, strict compiler settings, Next-compatible lint configuration, and scripts for `dev`, `build`, `start`, `lint`, and `typecheck`.
 - [ ] Add root layout, home page, metadata, global style tokens, and the intended route skeleton.
-- [ ] Mark the root package private if the full-application proposal is accepted; retire the old `main`/`module` contract as a documented breaking change.
-- [ ] Correct `.gitignore`; stop tracking `node_modules/` and `.env` in future commits while retaining the source files. Add `.next/`, coverage, and test-output ignores.
-- [ ] Add `.env.example` containing placeholders only, and make missing required configuration fail clearly without printing values.
+- [x] Mark the root package private if the full-application proposal is accepted; retire the old `main`/`module` contract as a documented breaking change.
+- [x] Correct `.gitignore`; stop tracking `node_modules/` and `.env` in future commits while retaining the source files. Add `.next/`, coverage, and test-output ignores.
+- [x] Add `.env.example` containing placeholders only, and make missing required configuration fail clearly without printing values.
 
 Exit condition: a clean dependency install, development server, lint, typecheck, and production build work for the scaffold. No real user data is needed at build time.
 
